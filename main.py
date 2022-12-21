@@ -1,6 +1,7 @@
 import argparse
 import subprocess
 import os
+import uuid
 
 class interactive_compiler:
     def __init__(self):
@@ -25,10 +26,16 @@ class interactive_compiler:
             print(assembled_file)
         with open('tmp.cpp', 'w') as file:
             file.write(assembled_file)
-        subprocess.run(['g++', 'tmp.cpp'])
-        if os.path.isfile('./a.out'):
-            subprocess.run(['./a.out'])
-            subprocess.run(['rm', 'a.out'])
+        filename = str(uuid.uuid4())
+        subprocess.run(['g++', 'tmp.cpp', '-o', filename])
+        if os.name == "nt":
+            name = ".\\" + filename + ".exe"
+        else:
+            name = "./" + filename
+        if os.path.isfile(name):
+            subprocess.run([name])
+            subprocess.run(['rm', name])
+            
         else:
             print('compilation failed')
         subprocess.run(['rm', 'tmp.cpp'])
