@@ -44,7 +44,6 @@ class interactive_compiler:
         self.includes += f'#include {name}\n'
 
     def validate(self, line):
-        replace_count = 0
         if line[-1] != ';':
             if '(' in line:
                 if line.split('(')[0] in self.functions_dict:
