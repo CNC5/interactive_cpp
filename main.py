@@ -60,13 +60,21 @@ class interactive_compiler:
 
     def exec_line(self, line):
         first_word = line.split(' ')[0]
-        if line == '!rst':
+        cmd_list = ['reset','scope']
+        if not line:
+            print('execution complete, exiting')
+            exit()
+        elif line[0] == '!' and not line[1:] in cmd_list:
+            print(f'{line[1:]} is not a command')
+            return
+        elif line == '!reset':
             self.__init__()
             print('scope reset')
             return
-        elif not line:
-            print('execution complete, exiting')
-            exit()
+        elif line == '!scope':
+            print(f'INCLUDES:\n{self.includes}')
+            print(f'VARIABLES:\n{self.vars_dict}')
+            print(f'FUNCTIONS:\n{self.functions}')
         elif line in self.vars_dict:
             line = f'cout<<{line}<<endl;'
             self.main += line+'\n'
@@ -91,7 +99,7 @@ class interactive_compiler:
                     self.vars = ''
                     for x in tmp.split('\n'):
                         if f' {var_name}' not in x:
-                            self.vars=self.vars+x+'\n' 
+                            self.vars=self.vars+x+'\n'
                 self.vars += f'{self.validate(line)}\n'
                 if not var_name in self.vars_dict:
                     self.vars_dict.append(var_name)
