@@ -46,20 +46,19 @@ class interactive_compiler:
 
     def validate(self, line):
         if line[-1] != ';':
-            if '(' in line:
-                if line.split('(')[0] in self.functions_dict:
-                    line += ';'
-                else:
-                    return line
-            elif line.split(' ')[0] in self.types:
+            if line.split(' ')[0] in self.types and '(' in line:
+                return line
+            else:
                 line += ';'
-            elif line[:3] == 'cout':
-                line += ';'
+
         return line
 
     def exec_line(self, line):
         first_word = line.split(' ')[0]
-        if not line:
+        if line == '$rst':
+            self.__init__()
+            return
+        elif not line:
             print('execution complete, exiting')
             exit()
         if self.func_level:
