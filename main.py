@@ -21,7 +21,8 @@ class interactive_compiler:
         self.types = ['int', 'string', 'void', 'float']
 
     def compile(self):
-        assembled_file = self.includes+'\n'+self.functions+'\nint main(){\n'+self.vars+'\n'+self.main+'\nreturn 0;\n}'
+        assembled_file = self.includes+'\n'+self.functions+'\nint main(){\n'+\
+            self.vars+'\n'+self.main+'\nreturn 0;\n}'
         if self.args.debug:
             print(assembled_file)
         with open('tmp.cpp', 'w') as file:
@@ -50,9 +51,9 @@ class interactive_compiler:
                     line += ';'
                 else:
                     return line
-            elif 'cout' in line:
-                line += ';'
             elif line.split(' ')[0] in self.types:
+                line += ';'
+            elif line[:3] == 'cout':
                 line += ';'
         return line
 
