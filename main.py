@@ -17,6 +17,7 @@ class interactive_compiler:
         self.functions = ''
         self.functions_dict = []
         self.vars = ''
+        self.vars_dict = []
         self.main = ''
         self.types = ['int', 'string', 'void', 'float']
 
@@ -24,10 +25,13 @@ class interactive_compiler:
         assembled_file = self.includes+'\n'+self.functions+'\nint main(){\n'+\
             self.vars+'\n'+self.main+'\nreturn 0;\n}'
         if self.args.debug:
-            print(assembled_file)
+            print(f'vars dict: {self.vars_dict}')
+            print(f'full file:\n{assembled_file}')
         with open('tmp.cpp', 'w') as file:
             file.write(assembled_file)
         filename = str(uuid.uuid4())
+        if self.args.debug:
+            print('compilation stage started:')
         subprocess.run(['g++', 'tmp.cpp', '-o', filename])
         if os.name == "nt":
             name = ".\\" + filename + ".exe"
@@ -36,10 +40,11 @@ class interactive_compiler:
         if os.path.isfile(name):
             subprocess.run([name])
             subprocess.run(['rm', name])
-            
         else:
             print('compilation failed')
         subprocess.run(['rm', 'tmp.cpp'])
+        if self.args.debug:
+            print('compilation stage complete')
 
     def include(self, name):
         self.includes += f'#include {name}\n'
@@ -55,13 +60,17 @@ class interactive_compiler:
 
     def exec_line(self, line):
         first_word = line.split(' ')[0]
-        if line == '$rst':
+        if line == '!rst':
             self.__init__()
+            print('scope reset')
             return
         elif not line:
             print('execution complete, exiting')
             exit()
-        if self.func_level:
+        elif line in self.vars_dict:
+            line = f'cout<<{line}<<endl;'
+            self.main += line+'\n'
+        elif self.func_level:
             if '}' in line:
                 self.func_level -= 1
                 self.functions += '}\n'
@@ -69,13 +78,23 @@ class interactive_compiler:
                 self.functions += self.validate(line)
             return
         elif first_word in self.types:
-            if '{' in line:
+            if '(' in line:
                 self.func_level += 1
                 self.functions += line
                 self.functions_dict.append(line.split(' ')[1].split('(')[0])
                 return
             else:
+                var_type, var_name = line.split(' ', 1)
+                var_name = var_name.split('=')[0]
+                if var_name in self.vars_dict:
+                    tmp = self.vars
+                    self.vars = ''
+                    for x in tmp.split('\n'):
+                        if f' {var_name}' not in x:
+                            self.vars=self.vars+x+'\n' 
                 self.vars += f'{self.validate(line)}\n'
+                if not var_name in self.vars_dict:
+                    self.vars_dict.append(var_name)
                 return
         elif first_word == '#include':
             self.includes += line
@@ -83,8 +102,7 @@ class interactive_compiler:
         else:
             self.main += self.validate(line)+'\n'
         self.compile()
-        self.main=self.main.split(line)[0]
-
+        self.main = ''
 
 icpp = interactive_compiler()
 
