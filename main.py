@@ -75,6 +75,7 @@ class interactive_compiler:
             print(f'INCLUDES:\n{self.includes}')
             print(f'VARIABLES:\n{self.vars_dict}')
             print(f'FUNCTIONS:\n{self.functions}')
+            return
         elif line in self.vars_dict:
             line = f'cout<<{line}<<endl;'
             self.main += line+'\n'
