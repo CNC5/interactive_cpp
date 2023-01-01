@@ -31,7 +31,7 @@ class interactive_compiler:
             file.write(assembled_file)
         filename = str(uuid.uuid4())
         if self.args.debug:
-            print('compilation stage started:')
+            print('compilation stage start:')
         subprocess.run(['g++', 'tmp.cpp', '-o', filename])
         if os.name == "nt":
             name = ".\\" + filename + ".exe"
@@ -44,7 +44,7 @@ class interactive_compiler:
             print('compilation failed')
         subprocess.run(['rm', 'tmp.cpp'])
         if self.args.debug:
-            print('compilation stage complete')
+            print('compilation stage end')
 
     def include(self, name):
         self.includes += f'#include {name}\n'
