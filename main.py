@@ -5,7 +5,7 @@ import uuid
 
 class interactive_compiler:
     def add_extended_funcs(self):
-        extended_functions = 'void print(auto prompt){cout<<prompt<<endl;}'
+        extended_functions = 'void print(auto prompt){std::cout<<prompt<<endl;}'
         self.functions += extended_functions
         self.functions_dict.append('print')
 
@@ -167,9 +167,11 @@ if __name__ == '__main__':
     default_prompt = '>>> '
     function_prompt = '... '
     print('for help: !help')
-    while True:
-        if icpp.func_level > 0:
-            icpp.exec_line(input(function_prompt))
-        else:
-            icpp.exec_line(input(default_prompt))
-
+    try:
+        while True:
+            if icpp.func_level > 0:
+                icpp.exec_line(input(function_prompt))
+            else:
+                icpp.exec_line(input(default_prompt))
+    except (EOFError, KeyboardInterrupt):
+        print('\ninterrupted, stopping')
