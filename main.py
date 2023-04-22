@@ -19,7 +19,7 @@ class interactive_compiler:
         self.vars = ''
         self.vars_dict = []
         self.main = ''
-        self.types = ['int', 'string', 'void', 'float']
+        self.types = ['int', 'string', 'void', 'float', 'char']
 
     def compile(self):
         assembled_file = self.includes+'\n'+self.functions+'\nint main(){\n'+\
@@ -60,22 +60,37 @@ class interactive_compiler:
 
     def exec_line(self, line):
         first_word = line.split(' ')[0]
-        cmd_list = ['reset','scope']
+        cmd_list = {'reset':    'reset the scope',
+                    'scope':    'print the current scope',
+                    'add_type': 'add a new var type',
+                    'help':     'print help'}
         if not line:
             print('execution complete, exiting')
             exit()
-        elif line[0] == '!' and not line[1:] in cmd_list:
+        elif line[0] == '!' and not first_word[1:] in cmd_list:
+            print(first_word[1:])
             print(f'{line[1:]} is not a command')
             return
-        elif line == '!reset':
+        elif first_word == '!reset':
             self.__init__()
             print('scope reset')
             return
-        elif line == '!scope':
+        elif first_word == '!scope':
             print(f'INCLUDES:\n{self.includes}')
+            print(f'VARIABLE_TYPES: {self.types}')
             print(f'VARIABLES:\n{self.vars_dict}')
             print(f'FUNCTIONS:\n{self.functions}')
             return
+        elif first_word == '!help':
+            print('cmd list:')
+            for cmd in cmd_list:
+                print(f'{cmd}: {cmd_list[cmd]}')
+        elif first_word == '!add_type':
+            for type in line.split(' ')[1:]:
+                if type not in self.types:
+                    self.types.append(type)
+                else:
+                    print('already present')
         elif line in self.vars_dict:
             line = f'cout<<{line}<<endl;'
             self.main += line+'\n'
@@ -118,6 +133,7 @@ icpp = interactive_compiler()
 if __name__ == '__main__':
     default_prompt = '>>> '
     function_prompt = '... '
+    print('for help: !help')
     while True:
         if icpp.func_level > 0:
             icpp.exec_line(input(function_prompt))
