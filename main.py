@@ -4,12 +4,22 @@ import os
 import uuid
 
 class interactive_compiler:
+    def add_extended_funcs(self):
+        extended_functions = 'void print(auto prompt){cout<<prompt<<endl;}'
+        self.functions += extended_functions
+        self.functions_dict.append('print')
+
     def __init__(self):
         parser = argparse.ArgumentParser(description='')
         parser.add_argument('-d', '--debug',
                             action='store_true',
                             help='enable debugging',
                             dest='debug',
+                            default=False)
+        parser.add_argument('-s', '--stripped',
+                            action='store_true',
+                            help='disable additional helper functions and default namespace',
+                            dest='stripped',
                             default=False)
         self.args = parser.parse_args()
         self.includes = '#include <iostream>\nusing namespace std;\n'
@@ -20,31 +30,38 @@ class interactive_compiler:
         self.vars_dict = []
         self.main = ''
         self.types = ['int', 'string', 'void', 'float', 'char']
+        if self.args.stripped:
+            self.includes = ''
+        else:
+            self.add_extended_funcs()
 
     def compile(self):
         assembled_file = self.includes+'\n'+self.functions+'\nint main(){\n'+\
             self.vars+'\n'+self.main+'\nreturn 0;\n}'
         if self.args.debug:
-            print(f'vars dict: {self.vars_dict}')
-            print(f'full file:\n{assembled_file}')
+            print(f'VARS DICT: {self.vars_dict}')
+            print(f'FULL FILE:\n{assembled_file}')
         with open('tmp.cpp', 'w') as file:
             file.write(assembled_file)
         filename = str(uuid.uuid4())
         if self.args.debug:
-            print('compilation stage start:')
-        subprocess.run(['g++', 'tmp.cpp', '-o', filename])
+            print('COMPILATION STAGE START:')
+        compile_command = ['g++', 'tmp.cpp', '-o', filename]
+        if not self.args.debug:
+            compile_command.append('-w')
+        subprocess.run(compile_command)
         if os.name == "nt":
             name = ".\\" + filename + ".exe"
         else:
             name = "./" + filename
         if os.path.isfile(name):
+            if self.args.debug:
+                print('COMPILATION STAGE END')
             subprocess.run([name])
             subprocess.run(['rm', name])
         else:
-            print('compilation failed')
+            print('COMPILATION FAILED')
         subprocess.run(['rm', 'tmp.cpp'])
-        if self.args.debug:
-            print('compilation stage end')
 
     def include(self, name):
         self.includes += f'#include {name}\n'
@@ -55,7 +72,8 @@ class interactive_compiler:
                 return line
             else:
                 line += ';'
-
+                if self.args.debug:
+                    print('VALIDATOR: line completed with ;')
         return line
 
     def exec_line(self, line):
@@ -63,7 +81,8 @@ class interactive_compiler:
         cmd_list = {'reset':    'reset the scope',
                     'scope':    'print the current scope',
                     'add_type': 'add a new var type',
-                    'help':     'print help'}
+                    'help':     'print help',
+                    'debug':    'enable/disable debugging'}
         if not line:
             print('execution complete, exiting')
             exit()
@@ -85,13 +104,25 @@ class interactive_compiler:
             print('cmd list:')
             for cmd in cmd_list:
                 print(f'{cmd}: {cmd_list[cmd]}')
+            return
         elif first_word == '!add_type':
             for type in line.split(' ')[1:]:
                 if type not in self.types:
                     self.types.append(type)
                 else:
                     print('already present')
+            return
+        elif first_word == '!debug':
+            if self.args.debug:
+                self.args.debug = False
+                print('debugging is now off')
+            else:
+                self.args.debug = True
+                print('debugging is now on')
+            return
         elif line in self.vars_dict:
+            if self.args.debug:
+                print('AUTOPRINTING')
             line = f'cout<<{line}<<endl;'
             self.main += line+'\n'
         elif self.func_level:
@@ -124,6 +155,8 @@ class interactive_compiler:
             self.includes += line
             return
         else:
+            if self.args.debug:
+                print('UNRECOGNIZED LINE')
             self.main += self.validate(line)+'\n'
         self.compile()
         self.main = ''
